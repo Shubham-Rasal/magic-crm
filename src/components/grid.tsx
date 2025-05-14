@@ -96,28 +96,30 @@ const myTheme = themeQuartz
         },
         foregroundColor: "#FFF",
         headerFontSize: 14
+
     });
 
 
   // Container: Defines the grid's theme & dimensions.
   return (
-    <div className="ag-theme-alpine-dark" style={{ 
-      height: 400, 
-      width: '100%',
-      background: '#1e1e1e'
-    }}>
+    <div className="w-full h-[800px]">
       <AgGridReact
         rowData={rowData}
         columnDefs={colDefs}
+        pagination={true}
+      
         defaultColDef={{
           ...defaultColDef,
           sortable: true,
           filter: true,
           resizable: true,
           editable: true,
+          minWidth: 150
         }}
         theme={myTheme}
-        domLayout="autoHeight"
+        suppressDragLeaveHidesColumns={true}
+        suppressColumnVirtualisation={true}
+        suppressRowVirtualisation={false}
       />
     </div>
   );
