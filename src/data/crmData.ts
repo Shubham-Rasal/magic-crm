@@ -1,6 +1,7 @@
 import { faker } from '@faker-js/faker';
 
 export interface ICRMRow {
+    id: string;
     fullName: string;
     email: string;
     linkedinUrl: string;
@@ -47,9 +48,10 @@ const companySizes = ['1-10', '11-50', '51-200', '201-500', '501-1000', '1000+']
 
 function generateDummyContact(): ICRMRow {
     return {
+        id: faker.string.uuid(),
         fullName: faker.person.fullName(),
         email: faker.internet.email(),
-        linkedinUrl: `linkedin.com/in/${faker.internet.userName()}`,
+        linkedinUrl: `linkedin.com/in/${faker.internet.username()}`,
         companyName: faker.company.name(),
         jobTitle: faker.person.jobTitle(),
         currentCompany: faker.company.name(),
@@ -64,8 +66,8 @@ function generateDummyContact(): ICRMRow {
         companyHQLocation: faker.location.city() + ', ' + faker.location.country(),
         fundingStage: faker.helpers.arrayElement(fundingStages),
         recentNews: faker.lorem.sentence(),
-        twitterHandle: '@' + faker.internet.userName(),
-        githubProfile: 'github.com/' + faker.internet.userName(),
+        twitterHandle: '@' + faker.internet.username(),
+        githubProfile: 'github.com/' + faker.internet.username(),
         personalWebsite: faker.internet.url(),
         blogPosts: Array(faker.number.int({ min: 0, max: 3 })).fill(null).map(() => faker.lorem.sentence()),
         recentLinkedInActivity: faker.lorem.sentence(),

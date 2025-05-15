@@ -11,14 +11,19 @@
   "dependencies": {
     "ag-grid-community": "^33.3.0",
     "ag-grid-react": "^33.3.0",
+    "framer-motion": "^11.0.8",
+    "lucide-react": "^0.510.0",
     "next": "15.3.2",
+    "papaparse": "^5.4.1",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@faker-js/faker": "^9.8.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
+    "@types/papaparse": "^5.3.14",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "tailwindcss": "^4",
