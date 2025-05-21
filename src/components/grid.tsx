@@ -1,317 +1,89 @@
 'use client';
-import React, { useState, useEffect } from "react";
-import { themeQuartz } from 'ag-grid-community';
-import type { ColDef, ICellRendererParams } from "ag-grid-community";
-import { AllCommunityModule, ModuleRegistry } from "ag-grid-community";
-import { AgGridReact } from "ag-grid-react";
+import React, { useState } from "react";
 import { dummyContacts, ICRMRow } from '../data/crmData';
-// Replace react-icons with Lucide icons
-import { Edit, Trash2, MoreVertical, Star, Mail, Phone, Calendar, FileEdit, BarChart3 } from 'lucide-react';
+import { FileEdit } from 'lucide-react'; // Removed unused icons
 import ImportExportToolbar from "./ImportExportToolbar";
 import { motion } from "framer-motion";
-
-ModuleRegistry.registerModules([AllCommunityModule]);
+import ReactPaginate from 'react-paginate';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "./ui/table";
+import {
+  ActionCell,
+  LeadScoreCell,
+  StatusCell,
+  DateCell,
+  EmailCell,
+  IntentSignalsCell,
+} from "./CellRenderers"; // Import cell renderers
+import { ColumnOptionsDialog } from "./ColumnOptionsDialog"; // Import dialog component
 
 // Create new GridExample component
 export default function GridExample() {
   const [rowData, setRowData] = useState<ICRMRow[]>(dummyContacts);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [loadingNames, setLoadingNames] = useState(true);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedColumn, setSelectedColumn] = useState<{ name: string; field: string } | null>(null);
+  const itemsPerPage = 20;
+
+  // Simulate web search loading for names
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      setLoadingNames(false);
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Handle imported data
   const handleDataImport = (importedData: ICRMRow[]) => {
-    // Merge with existing data or replace it
-    setRowData(prevData => [...importedData]);
-    
-    // You might want to show a notification here
+    setRowData(importedData);
   };
 
-  // Action cell renderer component with Lucide icons
-  const ActionCellRenderer = (params: ICellRendererParams) => {
-    const handleEdit = (e: React.MouseEvent) => {
-      e.stopPropagation();
-      console.log('Edit row:', params.data);
-    };
-
-    const handleDelete = (e: React.MouseEvent) => {
-      e.stopPropagation();
-      console.log('Delete row:', params.data);
-    };
-
-    const handleMore = (e: React.MouseEvent) => {
-      e.stopPropagation();
-      console.log('More options for row:', params.data);
-    };
-
-    return (
-      <div className="flex items-center gap-2 opacity-70 hover:opacity-100">
-        <button onClick={handleEdit} className="p-1.5 rounded-full hover:bg-[rgb(39,154,170)]/20 transition-colors" title="Edit">
-          <Edit size={16} className="text-[rgb(39,154,170)]" strokeWidth={1.5} />
-        </button>
-        <button onClick={handleDelete} className="p-1.5 rounded-full hover:bg-red-500/20 transition-colors" title="Delete">
-          <Trash2 size={16} className="text-red-400" strokeWidth={1.5} />
-        </button>
-        <button onClick={handleMore} className="p-1.5 rounded-full hover:bg-gray-500/20 transition-colors" title="More options">
-          <MoreVertical size={16} className="text-gray-400" strokeWidth={1.5} />
-        </button>
-      </div>
-    );
+  // Function to save column metadata to local storage
+  const saveColumnMetadata = (columns: { name: string; field: string; systemPrompt: string; autofillType: string }[]) => {
+    localStorage.setItem('columnMetadata', JSON.stringify(columns));
   };
 
-  // Lead score cell renderer with star icon
-  const LeadScoreCellRenderer = (params: ICellRendererParams) => {
-    const score = params.value || 0;
-    return (
-      <div className="flex items-center">
-        <Star size={16} className="text-[rgb(39,154,170)] mr-1" fill="rgb(39,154,170)" strokeWidth={1.5} />
-        <span>{score}</span>
-      </div>
-    );
+  // Function to load column metadata from local storage
+  const loadColumnMetadata = (): { name: string; field: string; systemPrompt: string; autofillType: string }[] => {
+    const storedData = localStorage.getItem('columnMetadata');
+    return storedData ? JSON.parse(storedData) : [];
   };
 
-  // Custom status cell renderer
-  const StatusCellRenderer = (params: ICellRendererParams) => {
-    const status = params.value || '';
-    const getStatusClass = () => {
-      switch(status.toString().toLowerCase()) {
-        case 'active': return 'bg-[rgb(39,154,170)]/20 text-[rgb(39,154,170)] border-[rgb(39,154,170)]/30';
-        case 'pending': return 'bg-yellow-500/20 text-yellow-400 border-yellow-400/30';
-        case 'inactive': return 'bg-gray-500/20 text-gray-400 border-gray-400/30';
-        default: return 'bg-[rgb(39,154,170)]/20 text-[rgb(39,154,170)] border-[rgb(39,154,170)]/30';
-      }
-    };
-    
-    return (
-      <div className={`px-2 py-1 rounded-full text-xs font-medium text-center w-24 border ${getStatusClass()}`}>
-        {status.toString()}
-      </div>
-    );
+  // Initialize column metadata
+  const columnMetadata: { name: string; field: string; systemPrompt: string; autofillType: string }[] = [
+    { name: "Full Name", field: "fullName", systemPrompt: "", autofillType: "ai" },
+    { name: "Email", field: "email", systemPrompt: "", autofillType: "ai" },
+    { name: "Company", field: "companyName", systemPrompt: "", autofillType: "ai" },
+    { name: "Job Title", field: "jobTitle", systemPrompt: "", autofillType: "ai" },
+    { name: "Status", field: "engagementStatus", systemPrompt: "", autofillType: "ai" },
+    { name: "Last Contacted", field: "lastContacted", systemPrompt: "", autofillType: "ai" },
+    { name: "Follow-up", field: "followUpDate", systemPrompt: "", autofillType: "ai" },
+    { name: "Lead Score", field: "leadScore", systemPrompt: "", autofillType: "ai" },
+    { name: "Intent Signals", field: "buyerIntentSignals", systemPrompt: "", autofillType: "ai" },
+    { name: "Location", field: "location", systemPrompt: "", autofillType: "ai" },
+  ];
+
+  // Save metadata to local storage on component mount
+  React.useEffect(() => {
+    saveColumnMetadata(columnMetadata);
+  }, []);
+
+  // Calculate pagination values
+  const pageCount = Math.ceil(rowData.length / itemsPerPage);
+  const offset = currentPage * itemsPerPage;
+  const currentPageData = rowData.slice(offset, offset + itemsPerPage);
+
+  // Handle page change
+  const handlePageClick = (event: { selected: number }) => {
+    setCurrentPage(event.selected);
   };
-
-  // Date cell renderer with calendar icon
-  const DateCellRenderer = (params: ICellRendererParams) => {
-    if (!params.value) return null;
-    
-    let date;
-    try {
-      date = new Date(params.value).toLocaleDateString();
-    } catch (e) {
-      console.error('Invalid date format:', params.value);
-      return null;
-    }
-    
-    return (
-      <div className="flex items-center">
-        <Calendar size={15} className="text-[rgb(39,154,170)] mr-2" strokeWidth={1.5} />
-        <span>{date}</span>
-      </div>
-    );
-  };
-
-  // Email cell renderer with mail icon
-  const EmailCellRenderer = (params: ICellRendererParams) => {
-    if (!params.value) return null;
-    return (
-      <div className="flex items-center">
-        <Mail size={15} className="text-[rgb(39,154,170)] mr-2" strokeWidth={1.5} />
-        <span>{params.value.toString()}</span>
-      </div>
-    );
-  };
-
-  // Phone cell renderer with phone icon
-  const PhoneCellRenderer = (params: ICellRendererParams) => {
-    if (!params.value) return null;
-    return (
-      <div className="flex items-center">
-        <Phone size={15} className="text-[rgb(39,154,170)] mr-2" strokeWidth={1.5} />
-        <span>{params.value.toString()}</span>
-      </div>
-    );
-  };
-
-  // Intent signals cell renderer with chart icon
-  const IntentSignalsCellRenderer = (params: ICellRendererParams) => {
-    if (!params.value) return null;
-    return (
-      <div className="flex items-center">
-        <BarChart3 size={15} className="text-[rgb(39,154,170)] mr-2" strokeWidth={1.5} />
-        <span>{params.value.toString()}</span>
-      </div>
-    );
-  };
-
-  // Column Definitions: Defines & controls grid columns.
-  const [colDefs, setColDefs] = useState<ColDef<ICRMRow>[]>([
-    // Actions column (new)
-    { 
-      headerName: "Actions",
-      width: 140,
-      cellRenderer: ActionCellRenderer,
-      sortable: false,
-      filter: false,
-      pinned: 'left',
-      cellClass: 'flex items-center justify-center'
-    },
-    
-    // Core user data with enhanced styling
-    { 
-      field: "fullName", 
-      headerName: "Full Name", 
-      sortable: true, 
-      filter: true,
-      pinned: 'left',
-      cellClass: 'font-medium',
-      headerClass: 'ag-header-cell-left-aligned'
-    },
-    { 
-      field: "email", 
-      headerName: "Email", 
-      sortable: true, 
-      filter: true,
-      cellRenderer: EmailCellRenderer
-    },
-    { field: "companyName", headerName: "Company", sortable: true, filter: true },
-    { field: "jobTitle", headerName: "Job Title", sortable: true, filter: true },
-    
-    // Status column with custom renderer
-    { 
-      field: "engagementStatus", 
-      headerName: "Status", 
-      sortable: true, 
-      filter: true,
-      cellRenderer: StatusCellRenderer,
-      width: 150
-    },
-
-    // Dates with formatted output
-    { 
-      field: "lastContacted", 
-      headerName: "Last Contacted", 
-      sortable: true, 
-      filter: true,
-      cellRenderer: DateCellRenderer,
-      width: 170
-    },
-    { 
-      field: "followUpDate", 
-      headerName: "Follow-up", 
-      sortable: true, 
-      filter: true,
-      cellRenderer: DateCellRenderer,
-      width: 170
-    },
-
-    // Important fields
-    { 
-      field: "leadScore", 
-      headerName: "Lead Score", 
-      sortable: true, 
-      filter: true, 
-      width: 140,
-      cellRenderer: LeadScoreCellRenderer
-    },
-    { 
-      field: "buyerIntentSignals", 
-      headerName: "Intent Signals", 
-      sortable: true, 
-      filter: true,
-      cellRenderer: IntentSignalsCellRenderer
-    },
-    { 
-      field: "location", 
-      headerName: "Location", 
-      sortable: true, 
-      filter: true
-    },
-    
-    // Additional fields (collapsed by default)
-    { field: "linkedinUrl", headerName: "LinkedIn URL", sortable: true, filter: true, hide: true },
-    { field: "currentCompany", headerName: "Current Company", sortable: true, filter: true, hide: true },
-    { field: "workExperience", headerName: "Work Experience", sortable: true, filter: true, hide: true },
-    { field: "education", headerName: "Education", sortable: true, filter: true, hide: true },
-    { field: "skills", headerName: "Skills", sortable: true, filter: true, hide: true },
-    { field: "certifications", headerName: "Certifications", sortable: true, filter: true, hide: true },
-    { field: "companyWebsite", headerName: "Company Website", sortable: true, filter: true, hide: true },
-    { field: "companyIndustry", headerName: "Industry", sortable: true, filter: true, hide: true },
-    { field: "companySize", headerName: "Company Size", sortable: true, filter: true, hide: true },
-    { field: "companyHQLocation", headerName: "HQ Location", sortable: true, filter: true, hide: true },
-    { field: "fundingStage", headerName: "Funding", sortable: true, filter: true, hide: true },
-    { field: "recentNews", headerName: "Recent News", sortable: true, filter: true, hide: true },
-    { field: "twitterHandle", headerName: "Twitter", sortable: true, filter: true, hide: true },
-    { field: "githubProfile", headerName: "GitHub", sortable: true, filter: true, hide: true },
-    { field: "personalWebsite", headerName: "Website", sortable: true, filter: true, hide: true },
-    { field: "blogPosts", headerName: "Blog Posts", sortable: true, filter: true, hide: true },
-    { field: "recentLinkedInActivity", headerName: "LinkedIn Activity", sortable: true, filter: true, hide: true },
-    { field: "profilePictureUrl", headerName: "Profile Pic URL", sortable: true, filter: true, hide: true },
-    { field: "contactAvailability", headerName: "Availability", sortable: true, filter: true, hide: true },
-    { 
-      field: "publicPhoneNumber", 
-      headerName: "Phone", 
-      sortable: true, 
-      filter: true, 
-      hide: true,
-      cellRenderer: PhoneCellRenderer
-    },
-    { field: "timeZone", headerName: "Time Zone", sortable: true, filter: true, hide: true },
-    { field: "bestTimeToContact", headerName: "Best Contact Time", sortable: true, filter: true, hide: true },
-    { field: "languagesSpoken", headerName: "Languages", sortable: true, filter: true, hide: true },
-    { field: "relevantProductFit", headerName: "Product Fit", sortable: true, filter: true, hide: true },
-    { field: "pastEngagements", headerName: "Past Engagements", sortable: true, filter: true, hide: true },
-    { field: "notes", headerName: "Notes", sortable: true, filter: true, hide: true },
-    { field: "crmOwner", headerName: "Owner", sortable: true, filter: true, hide: true }
-  ]);
-
-  const defaultColDef: ColDef = {
-    flex: 1,
-    minWidth: 100,
-  };
-
-  // Modern dark theme configuration using the new color scheme
-  const modernTheme = themeQuartz.withParams({
-    // Base colors - using primary color rgb(27, 29, 33)
-    backgroundColor: "rgb(27, 29, 33)",
-    browserColorScheme: "dark",
-    foregroundColor: "#ffffff",
-
-    // Structural elements
-    borderColor: "rgba(255, 255, 255, 0.08)",
-    headerBackgroundColor: "rgb(32, 34, 38)",
-    subHeaderBackgroundColor: "rgb(29, 31, 35)",
-    
-    // Text styling
-    headerFontSize: 13,
-    headerFontWeight: 600,
-    fontFamily: "'Inter', system-ui, sans-serif",
-    fontSize: 13,
-    
-    // Row styling
-    alternateRowBackgroundColor: {
-      ref: "backgroundColor",
-      mix: 0.06,
-      onto: "foregroundColor"
-    },
-    rowHoverColor: {
-      ref: "foregroundColor", 
-      mix: 0.08,
-      onto: "backgroundColor"
-    },
-    selectedRowBackgroundColor: {
-      mix: 0.2,
-      onto: "backgroundColor",
-      color: "rgb(39, 154, 170)"  // Using secondary color
-    },
-
-    // Icons and indicators
-    iconColor: "rgba(255, 255, 255, 0.7)",
-    
-    // Input fields
-    inputBackgroundColor: "rgb(37, 39, 43)",
-    inputBorderColor: "rgba(255, 255, 255, 0.15)",
-    
-    // Various UI element colors - using secondary color rgb(39, 154, 170)
-    primaryColor: "rgb(39, 154, 170)",
-    primaryColorInteraction: "rgb(49, 164, 180)",
-    accentColor: "rgb(39, 154, 170)",
-  });
 
   return (
     <div className="flex flex-col gap-4 w-full">
@@ -332,50 +104,166 @@ export default function GridExample() {
         <ImportExportToolbar data={rowData} onDataImport={handleDataImport} />
       </motion.div>
       
-      {/* Data Grid */}
+      {/* Data Table */}
       <motion.div 
-        className="relative w-full h-[800px] rounded-xl overflow-hidden border border-gray-800 shadow-2xl bg-[rgb(27,29,33)]"
+        className="relative w-full overflow-hidden bg-[#0D0F12] rounded-lg border border-zinc-800/50"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.1 }}
       >
-        <div className="absolute inset-0 bg-gradient-to-br from-[rgb(39,154,170)]/5 via-transparent to-[rgb(39,154,170)]/5"></div>
-        <div className="ag-theme-quartz-dark h-full w-full">
-          <AgGridReact
-            rowData={rowData}
-            columnDefs={colDefs}
-            pagination={true}
-            paginationPageSize={20}
-            
-            defaultColDef={{
-              ...defaultColDef,
-              sortable: true,
-              filter: true,
-              resizable: true,
-              editable: false,
-            }}
-            
-            theme={modernTheme}
-            animateRows={true}
-            rowHeight={54}
-            headerHeight={48}
-            
-            suppressDragLeaveHidesColumns={true}
-            suppressColumnVirtualisation={true}
-            suppressRowVirtualisation={false}
-            
-            enableCellTextSelection={true}
-            tooltipShowDelay={300}
-            
-            // Group panel and other toolbar features
-            rowSelection="multiple"
-            rowMultiSelectWithClick={true}
-            
-            // Style classes
-            rowClass="transition-all"
+        <div className="relative overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow className="border-b border-zinc-800/50">
+                <TableHead className="w-[140px] py-3 text-xs font-medium text-zinc-400">Actions</TableHead>
+                <TableHead 
+                  onClick={() => {
+                    setSelectedColumn({ name: "Full Name", field: "fullName" });
+                    setDialogOpen(true);
+                  }}
+                  className="py-3 text-xs font-medium text-zinc-400 cursor-pointer hover:text-zinc-200"
+                >
+                  Full Name
+                </TableHead>
+                <TableHead 
+                  onClick={() => {
+                    setSelectedColumn({ name: "Email", field: "email" });
+                    setDialogOpen(true);
+                  }}
+                  className="py-3 text-xs font-medium text-zinc-400 cursor-pointer hover:text-zinc-200"
+                >
+                  Email
+                </TableHead>
+                <TableHead 
+                  onClick={() => {
+                    setSelectedColumn({ name: "Company", field: "companyName" });
+                    setDialogOpen(true);
+                  }}
+                  className="py-3 text-xs font-medium text-zinc-400 cursor-pointer hover:text-zinc-200"
+                >
+                  Company
+                </TableHead>
+                <TableHead 
+                  onClick={() => {
+                    setSelectedColumn({ name: "Job Title", field: "jobTitle" });
+                    setDialogOpen(true);
+                  }}
+                  className="py-3 text-xs font-medium text-zinc-400 cursor-pointer hover:text-zinc-200"
+                >
+                  Job Title
+                </TableHead>
+                <TableHead 
+                  onClick={() => {
+                    setSelectedColumn({ name: "Status", field: "engagementStatus" });
+                    setDialogOpen(true);
+                  }}
+                  className="py-3 text-xs font-medium text-zinc-400 cursor-pointer hover:text-zinc-200"
+                >
+                  Status
+                </TableHead>
+                <TableHead 
+                  onClick={() => {
+                    setSelectedColumn({ name: "Last Contacted", field: "lastContacted" });
+                    setDialogOpen(true);
+                  }}
+                  className="py-3 text-xs font-medium text-zinc-400 cursor-pointer hover:text-zinc-200"
+                >
+                  Last Contacted
+                </TableHead>
+                <TableHead 
+                  onClick={() => {
+                    setSelectedColumn({ name: "Follow-up", field: "followUpDate" });
+                    setDialogOpen(true);
+                  }}
+                  className="py-3 text-xs font-medium text-zinc-400 cursor-pointer hover:text-zinc-200"
+                >
+                  Follow-up
+                </TableHead>
+                <TableHead 
+                  onClick={() => {
+                    setSelectedColumn({ name: "Lead Score", field: "leadScore" });
+                    setDialogOpen(true);
+                  }}
+                  className="py-3 text-xs font-medium text-zinc-400 cursor-pointer hover:text-zinc-200"
+                >
+                  Lead Score
+                </TableHead>
+                <TableHead 
+                  onClick={() => {
+                    setSelectedColumn({ name: "Intent Signals", field: "buyerIntentSignals" });
+                    setDialogOpen(true);
+                  }}
+                  className="py-3 text-xs font-medium text-zinc-400 cursor-pointer hover:text-zinc-200"
+                >
+                  Intent Signals
+                </TableHead>
+                <TableHead 
+                  onClick={() => {
+                    setSelectedColumn({ name: "Location", field: "location" });
+                    setDialogOpen(true);
+                  }}
+                  className="py-3 text-xs font-medium text-zinc-400 cursor-pointer hover:text-zinc-200"
+                >
+                  Location
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {currentPageData.map((row, index) => (
+                <TableRow key={index} className="border-b border-zinc-800/50 transition-colors hover:bg-zinc-800/20">
+                  <TableCell className="py-3"><ActionCell row={row} /></TableCell>
+                  <TableCell className="py-3">
+                    {loadingNames ? (
+                      <div className="flex items-center gap-2">
+                        <div className="animate-spin w-3 h-3 border-2 border-[#3DD2D3] border-t-transparent rounded-full" />
+                        <span className="text-sm text-zinc-400">Searching the web...</span>
+                      </div>
+                    ) : (
+                      <span className="text-sm font-medium text-zinc-100">{row.fullName}</span>
+                    )}
+                  </TableCell>
+                  {/* <TableCell className="py-3"><EmailCell value={row.email} /></TableCell> */}
+                  <TableCell className="py-3 text-sm text-zinc-300">{row.companyName}</TableCell>
+                  <TableCell className="py-3 text-sm text-zinc-300">{row.jobTitle}</TableCell>
+                  <TableCell className="py-3"><StatusCell value={row.engagementStatus} /></TableCell>
+                  <TableCell className="py-3"><DateCell value={row.lastContacted} /></TableCell>
+                  <TableCell className="py-3"><DateCell value={row.followUpDate} /></TableCell>
+                  <TableCell className="py-3"><LeadScoreCell value={row.leadScore} /></TableCell>
+                  <TableCell className="py-3"><IntentSignalsCell value={row.buyerIntentSignals} /></TableCell>
+                  <TableCell className="py-3 text-sm text-zinc-300">{row.location}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+
+        {/* Pagination */}
+        <div className="flex justify-center py-4">
+          <ReactPaginate
+            breakLabel="..."
+            nextLabel="Next →"
+            onPageChange={handlePageClick}
+            pageRangeDisplayed={5}
+            pageCount={pageCount}
+            previousLabel="← Previous"
+            renderOnZeroPageCount={null}
+            className="flex items-center gap-2"
+            pageClassName="px-3 py-1 rounded text-sm text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50 transition-colors cursor-pointer"
+            activeClassName="!bg-[#1A4D4F] !text-[#3DD2D3]"
+            previousClassName="px-3 py-1 rounded text-sm text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50 transition-colors cursor-pointer"
+            nextClassName="px-3 py-1 rounded text-sm text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50 transition-colors cursor-pointer"
+            disabledClassName="opacity-50 cursor-not-allowed hover:bg-transparent hover:!text-zinc-400"
           />
         </div>
       </motion.div>
+
+      {/* Column Options Dialog */}
+      <ColumnOptionsDialog 
+        open={dialogOpen} 
+        onOpenChange={setDialogOpen} 
+        selectedColumn={selectedColumn}
+        availableColumns={columnMetadata}
+      />
     </div>
   );
 };

@@ -1,6 +1,7 @@
 import { faker } from '@faker-js/faker';
 
 export interface ICRMRow {
+    [key: string]: string | string[] | number | Date;  // Allow string indexing
     id: string;
     fullName: string;
     email: string;
@@ -89,4 +90,4 @@ function generateDummyContact(): ICRMRow {
     };
 }
 
-export const dummyContacts: ICRMRow[] = Array(20).fill(null).map(() => generateDummyContact());
+export const dummyContacts: ICRMRow[] = Array(1).fill(null).map(() => generateDummyContact());
