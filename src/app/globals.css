@@ -5,8 +5,9 @@
 
 :root {
   --primary: oklch(0.83 0.13 160.91);
-  --secondary: oklch(0.99 0 0);
-  --secondary-light: rgba(39, 154, 170, 0.2);
+  --secondary: rgb(49, 164, 180);
+  --secondary-rgb: 49, 164, 180;
+  --secondary-dark: rgba(39, 154, 170, 0.2);
   --secondary-hover: rgb(49, 164, 180);
   --radius: 0.5rem;
   --background: oklch(0.99 0 0);
@@ -203,6 +204,7 @@ textarea:focus {
   --primary: oklch(0.44 0.10 156.76);
   --primary-foreground: oklch(0.92 0.01 167.16);
   --secondary: oklch(0.26 0 0);
+  --secondary-rgb: 26, 0, 0; /* Added this line for dark mode */
   --secondary-foreground: oklch(0.99 0 0);
   --muted: oklch(0.24 0 0);
   --muted-foreground: oklch(0.71 0 0);

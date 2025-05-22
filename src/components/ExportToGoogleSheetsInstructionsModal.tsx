@@ -19,7 +19,6 @@ export default function ExportToGoogleSheetsInstructionsModal({
   steps,
   onOpenGoogleSheets
 }: ExportInstructionsModalProps) {
-  const [isCopied, setIsCopied] = React.useState(true);
   
   // Animation variants
   const overlayVariants = {

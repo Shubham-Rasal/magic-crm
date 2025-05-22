@@ -1,11 +1,18 @@
 import GridExample from "@/components/grid";
+import Header from "@/components/Header";
+import AuthCheck from "@/components/AuthCheck";
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-[rgb(22,24,28)] p-6 md:p-10">
-      <div className="max-w-7xl mx-auto">
-        <GridExample/>
-      </div>
-    </main>
+    <div className="min-h-screen bg-[rgb(22,24,28)] flex flex-col">
+      <Header />
+      <main className="flex-1 p-6 md:p-10">
+        <div className="max-w-7xl mx-auto">
+          <AuthCheck>
+            <GridExample/>
+          </AuthCheck>
+        </div>
+      </main>
+    </div>
   );
 }
