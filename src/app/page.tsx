@@ -1,4 +1,4 @@
-import GridExample from "@/components/grid";
+import ProductDashboard from "@/components/ProductDashboard";
 import Header from "@/components/Header";
 import AuthCheck from "@/components/AuthCheck";
 
@@ -9,7 +9,7 @@ export default function Home() {
       <main className="flex-1 p-6 md:p-10">
         <div className="max-w-7xl mx-auto">
           <AuthCheck>
-            <GridExample/>
+            <ProductDashboard />
           </AuthCheck>
         </div>
       </main>

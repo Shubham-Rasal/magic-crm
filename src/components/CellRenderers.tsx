@@ -70,15 +70,25 @@ export const StatusCell = ({ value }: { value: string }) => {
 };
 
 // Date cell renderer with calendar icon
-export const DateCell = ({ value }: { value: Date }) => {
+export const DateCell = ({ value }: { value: Date | string | null }) => {
   if (!value) return null;
   
   try {
-    const date = value.toLocaleDateString();
+    // Format the date based on type
+    let formattedDate: string;
+    if (value instanceof Date) {
+      formattedDate = value.toLocaleDateString();
+    } else if (typeof value === 'string' && value.trim() !== '') {
+      // Attempt to convert string to date
+      formattedDate = new Date(value).toLocaleDateString();
+    } else {
+      return null;
+    }
+    
     return (
       <div className="flex items-center">
         <Calendar size={15} className="text-[#3DD2D3] mr-2" strokeWidth={1.5} />
-        <span className="text-sm text-zinc-300">{date}</span>
+        <span className="text-sm text-zinc-300">{formattedDate}</span>
       </div>
     );
   } catch (e) {

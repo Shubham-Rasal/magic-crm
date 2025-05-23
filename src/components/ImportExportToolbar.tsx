@@ -8,13 +8,14 @@ import {
 } from 'lucide-react';
 import { exportToCSV, exportToExcel, exportToGoogleSheets, getExportInstructions } from '@/utils/exportUtils';
 import { ICRMRow } from '@/data/crmData';
+import { IProductLead } from '@/data/productData';
 import * as XLSX from "xlsx";
 import Papa from 'papaparse';
 import ExportToGoogleSheetsInstructionsModal from './ExportToGoogleSheetsInstructionsModal';
 
 interface ImportExportToolbarProps {
-  data: ICRMRow[];
-  onDataImport: (data: ICRMRow[]) => void;
+  data: ICRMRow[] | IProductLead[];
+  onDataImport: (data: ICRMRow[] | IProductLead[]) => void;
 }
 
 export default function ImportExportToolbar({ data, onDataImport }: ImportExportToolbarProps) {
@@ -193,7 +194,8 @@ export default function ImportExportToolbar({ data, onDataImport }: ImportExport
             try {
               processedRow[camelCaseKey as keyof ICRMRow] = new Date(value) as any;
             } catch (e) {
-              processedRow[camelCaseKey as keyof ICRMRow] = value as any;
+              // If date parsing fails, set to null instead of keeping the string
+              processedRow[camelCaseKey as keyof ICRMRow] = null as any;
             }
           } 
           else if (typeof value === 'string' && 

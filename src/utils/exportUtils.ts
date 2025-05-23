@@ -1,8 +1,11 @@
 import { ICRMRow } from "../data/crmData";
-import * as XLSX from "xlsx";
+import { IProductLead } from "../data/productData";
+
+// Define a type that can be either ICRMRow or IProductLead
+export type ExportDataType = ICRMRow | IProductLead;
 
 // Helper to convert data to CSV format
-export const convertToCSV = (data: ICRMRow[]): string => {
+export const convertToCSV = (data: ExportDataType[]): string => {
   if (data.length === 0) return "";
   
   // Get all keys from the data
@@ -14,7 +17,7 @@ export const convertToCSV = (data: ICRMRow[]): string => {
   // Create rows for each data item
   const rows = data.map(row => {
     return headers.map(header => {
-      const value = row[header as keyof ICRMRow];
+      const value = row[header as keyof typeof row];
       
       // Handle different data types
       if (value === null || value === undefined) return "";
@@ -34,7 +37,7 @@ export const convertToCSV = (data: ICRMRow[]): string => {
 };
 
 // Export data to CSV and download
-export const exportToCSV = (data: ICRMRow[], filename: string = 'crm-data.csv'): void => {
+export const exportToCSV = (data: ExportDataType[], filename: string = 'crm-data.csv'): void => {
   const csvData = convertToCSV(data);
   
   // Create a blob and download link
@@ -53,7 +56,7 @@ export const exportToCSV = (data: ICRMRow[], filename: string = 'crm-data.csv'):
   document.body.removeChild(link);
 };
 
-export const exportToExcel = (data: ICRMRow[], filename: string = 'crm-data.xlsx'): void => {
+export const exportToExcel = (data: ExportDataType[], filename: string = 'crm-data.xlsx'): void => {
   // Format data for Excel
   const formattedData = data.map((row) => {
     const formattedRow: { [key: string]: any } = { ...row };
@@ -92,7 +95,7 @@ export const exportToExcel = (data: ICRMRow[], filename: string = 'crm-data.xlsx
 };
 
 // Export data to Google Sheets
-export const exportToGoogleSheets = async (data: ICRMRow[]): Promise<{success: boolean, message?: string}> => {
+export const exportToGoogleSheets = async (data: ExportDataType[]): Promise<{success: boolean, message?: string}> => {
   try {
     if (!data || data.length === 0) {
       throw new Error("No data to export");
